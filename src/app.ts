@@ -1,5 +1,6 @@
 import express, { Request, Response } from "express";
 import { connectDB, getDb } from "./Config/db";
+import productRoutes from "./routes/productRoutes";
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -22,6 +23,9 @@ app.get("/health", async (_req: Request, res: Response) => {
     });
   }
 });
+
+// Product routes
+app.use("/api/products", productRoutes);
 
 async function start() {
   await connectDB(); // ensure connection before listening
