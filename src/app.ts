@@ -1,5 +1,6 @@
+// src/app.ts
 import express, { Request, Response } from "express";
-import { connectDB, getDb } from "./Config/db";
+import { getDb } from "./Config/db"; // only need getDb for health route
 import productRoutes from "./routes/productRoutes";
 import cors from "cors";
 import dotenv from "dotenv";
@@ -9,7 +10,7 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// ============ CORS CONFIGURATION ============
+// CORS configuration
 const allowedOrigins: string[] = [
   "https://code-vector-assg-frontend.vercel.app",
   "https://codevector-assg-frontend.vercel.app",
@@ -39,15 +40,11 @@ const corsOptions: cors.CorsOptions = {
   maxAge: 86400,
 };
 
-// Apply CORS middleware BEFORE any routes
 app.use(cors(corsOptions));
-
-// ============ MIDDLEWARE ============
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// ============ ROUTES ============
-
+// Routes
 app.get("/health", async (_req: Request, res: Response) => {
   try {
     const db = getDb();
@@ -71,23 +68,7 @@ app.get("/", (_req: Request, res: Response) => {
   res.send(`Hi there, backend running on port ${PORT}. CORS enabled.`);
 });
 
-// Product routes - MOUNT UNDER /api
 app.use("/api", productRoutes);
 
-// ============ START SERVER ============
-async function start() {
-  try {
-    await connectDB();
-    app.listen(PORT, () => {
-      console.log(`🚀 Server running on http://localhost:${PORT}`);
-      console.log(`💚 Health check: http://localhost:${PORT}/health`);
-      console.log(`📦 Products API: http://localhost:${PORT}/api/products`);
-      console.log(`🔒 CORS enabled for:`, allowedOrigins);
-    });
-  } catch (error) {
-    console.error("Failed to start server:", error);
-    process.exit(1);
-  }
-}
-
-start();
+// ✅ EXPORT the app (no server startup here)
+export default app;

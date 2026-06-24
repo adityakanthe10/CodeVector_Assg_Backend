@@ -1,10 +1,8 @@
 // src/index.ts
 import app from "./app";
+import { connectDB } from "./Config/db";
 
 const PORT = process.env.PORT || 5000;
-
-// Connect to MongoDB and start server
-import { connectDB } from "./Config/db";
 
 async function start() {
   try {
