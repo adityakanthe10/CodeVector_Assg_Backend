@@ -2,19 +2,66 @@ import express, { Request, Response } from "express";
 import { connectDB, getDb } from "./Config/db";
 import productRoutes from "./routes/productRoutes";
 import cors from "cors";
+import dotenv from "dotenv";
+
+dotenv.config();
 
 const app = express();
-const PORT = process.env.PORT;
+const PORT = process.env.PORT || 5000;
+
+// ============ CORS CONFIGURATION ============
+const allowedOrigins: string[] = [
+  "https://code-vector-assg-frontend.vercel.app",
+  "https://codevector-assg-frontend.vercel.app",
+  "http://localhost:3000",
+  "http://localhost:3001",
+].filter((origin): origin is string => origin !== undefined);
+
+// Add environment variable if it exists
+if (process.env.CORS_ORIGIN) {
+  allowedOrigins.push(process.env.CORS_ORIGIN);
+}
+
+const corsOptions: cors.CorsOptions = {
+  origin: allowedOrigins,
+  credentials: true,
+  optionsSuccessStatus: 200,
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
+  allowedHeaders: [
+    "Content-Type",
+    "Authorization",
+    "X-Requested-With",
+    "Accept",
+    "Origin",
+    "Access-Control-Allow-Origin",
+    "Access-Control-Allow-Headers",
+  ],
+  exposedHeaders: ["Content-Length", "X-Kuma-Revision"],
+  maxAge: 86400, // 24 hours
+};
+
+// Apply CORS middleware BEFORE any routes
+app.use(cors(corsOptions));
+
+// Handle preflight requests explicitly
+app.options("*", cors(corsOptions));
+
+// ============ MIDDLEWARE ============
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
+// ============ ROUTES ============
 
 // Health-check that verifies DB connectivity by pinging
 app.get("/health", async (_req: Request, res: Response) => {
   try {
     const db = getDb();
-    await db.admin().ping(); // Mongoose gives us the native driver db
+    await db.admin().ping();
     res.status(200).json({
       status: "ok",
       database: "connected",
       timestamp: new Date().toISOString(),
+      cors: "enabled",
     });
   } catch (error) {
     res.status(503).json({
@@ -25,20 +72,27 @@ app.get("/health", async (_req: Request, res: Response) => {
   }
 });
 
-app.get("/", (req, res) => {
-  res.send(`Hi there, backend running on port ${process.env.PORT}. `);
+app.get("/", (_req: Request, res: Response) => {
+  res.send(`Hi there, backend running on port ${PORT}. CORS enabled.`);
 });
 
-// Product routes
-app.use(cors());
-app.use("/api/products", productRoutes);
+// Product routes - MOUNT UNDER /api
+app.use("/api", productRoutes);
 
+// ============ START SERVER ============
 async function start() {
-  await connectDB(); // ensure connection before listening
-  app.listen(PORT, () => {
-    console.log(`🚀 Server running on http://localhost:${PORT}`);
-    console.log(`💚 Health check: http://localhost:${PORT}/health`);
-  });
+  try {
+    await connectDB();
+    app.listen(PORT, () => {
+      console.log(`🚀 Server running on http://localhost:${PORT}`);
+      console.log(`💚 Health check: http://localhost:${PORT}/health`);
+      console.log(`📦 Products API: http://localhost:${PORT}/api/products`);
+      console.log(`🔒 CORS enabled for:`, allowedOrigins);
+    });
+  } catch (error) {
+    console.error("Failed to start server:", error);
+    process.exit(1);
+  }
 }
 
 start();
