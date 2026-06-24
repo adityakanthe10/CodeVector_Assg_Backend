@@ -1,5 +1,6 @@
+// src/app.ts
 import express, { Request, Response } from "express";
-import { connectDB, getDb } from "./Config/db";
+import { getDb } from "./Config/db";
 import productRoutes from "./routes/productRoutes";
 import cors from "cors";
 import dotenv from "dotenv";
@@ -37,13 +38,11 @@ const corsOptions: cors.CorsOptions = {
     "Access-Control-Allow-Headers",
   ],
   exposedHeaders: ["Content-Length", "X-Kuma-Revision"],
-  maxAge: 86400, // 24 hours
+  maxAge: 86400,
 };
 
 // Apply CORS middleware BEFORE any routes
 app.use(cors(corsOptions));
-
-// Handle preflight requests explicitly
 app.options("*", cors(corsOptions));
 
 // ============ MIDDLEWARE ============
@@ -52,7 +51,6 @@ app.use(express.urlencoded({ extended: true }));
 
 // ============ ROUTES ============
 
-// Health-check that verifies DB connectivity by pinging
 app.get("/health", async (_req: Request, res: Response) => {
   try {
     const db = getDb();
@@ -76,23 +74,6 @@ app.get("/", (_req: Request, res: Response) => {
   res.send(`Hi there, backend running on port ${PORT}. CORS enabled.`);
 });
 
-// Product routes - MOUNT UNDER /api
 app.use("/api", productRoutes);
 
-// ============ START SERVER ============
-async function start() {
-  try {
-    await connectDB();
-    app.listen(PORT, () => {
-      console.log(`🚀 Server running on http://localhost:${PORT}`);
-      console.log(`💚 Health check: http://localhost:${PORT}/health`);
-      console.log(`📦 Products API: http://localhost:${PORT}/api/products`);
-      console.log(`🔒 CORS enabled for:`, allowedOrigins);
-    });
-  } catch (error) {
-    console.error("Failed to start server:", error);
-    process.exit(1);
-  }
-}
-
-start();
+export default app;
