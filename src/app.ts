@@ -40,6 +40,8 @@ const corsOptions: cors.CorsOptions = {
   maxAge: 86400,
 };
 
+// Handle CORS preflight for all routes (Express 5 syntax)
+app.options("/{*path}", cors(corsOptions));
 app.use(cors(corsOptions));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
