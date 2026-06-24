@@ -1,6 +1,6 @@
 // src/app.ts
 import express, { Request, Response } from "express";
-import { getDb } from "./Config/db"; // only need getDb for health route
+import { getDb } from "./Config/db";
 import productRoutes from "./routes/productRoutes";
 import cors from "cors";
 import dotenv from "dotenv";
@@ -40,9 +40,10 @@ const corsOptions: cors.CorsOptions = {
   maxAge: 86400,
 };
 
-// Handle CORS preflight for all routes (Express 5 syntax)
-app.options("/{*path}", cors(corsOptions));
+// ✅ CORS middleware – this handles preflight automatically
 app.use(cors(corsOptions));
+
+// Middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
@@ -72,5 +73,4 @@ app.get("/", (_req: Request, res: Response) => {
 
 app.use("/api", productRoutes);
 
-// ✅ EXPORT the app (no server startup here)
 export default app;
