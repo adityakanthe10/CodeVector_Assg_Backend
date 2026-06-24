@@ -4,6 +4,6 @@ import { productListHandler } from "../controller/productController";
 const router = Router();
 
 // GET /api/products
-router.get("/", productListHandler);
+router.get("/products", productListHandler);
 
 export default router;

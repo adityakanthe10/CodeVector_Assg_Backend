@@ -1,6 +1,5 @@
-// src/app.ts
 import express, { Request, Response } from "express";
-import { getDb } from "./Config/db";
+import { connectDB, getDb } from "./Config/db";
 import productRoutes from "./routes/productRoutes";
 import cors from "cors";
 import dotenv from "dotenv";
@@ -18,7 +17,6 @@ const allowedOrigins: string[] = [
   "http://localhost:3001",
 ].filter((origin): origin is string => origin !== undefined);
 
-// Add environment variable if it exists
 if (process.env.CORS_ORIGIN) {
   allowedOrigins.push(process.env.CORS_ORIGIN);
 }
@@ -43,7 +41,6 @@ const corsOptions: cors.CorsOptions = {
 
 // Apply CORS middleware BEFORE any routes
 app.use(cors(corsOptions));
-app.options("*", cors(corsOptions));
 
 // ============ MIDDLEWARE ============
 app.use(express.json());
@@ -74,6 +71,23 @@ app.get("/", (_req: Request, res: Response) => {
   res.send(`Hi there, backend running on port ${PORT}. CORS enabled.`);
 });
 
+// Product routes - MOUNT UNDER /api
 app.use("/api", productRoutes);
 
-export default app;
+// ============ START SERVER ============
+async function start() {
+  try {
+    await connectDB();
+    app.listen(PORT, () => {
+      console.log(`🚀 Server running on http://localhost:${PORT}`);
+      console.log(`💚 Health check: http://localhost:${PORT}/health`);
+      console.log(`📦 Products API: http://localhost:${PORT}/api/products`);
+      console.log(`🔒 CORS enabled for:`, allowedOrigins);
+    });
+  } catch (error) {
+    console.error("Failed to start server:", error);
+    process.exit(1);
+  }
+}
+
+start();
